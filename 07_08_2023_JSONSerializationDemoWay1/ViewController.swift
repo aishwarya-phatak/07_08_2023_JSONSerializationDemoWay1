@@ -8,10 +8,25 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    @IBOutlet weak var postTableView: UITableView!
+    private let postTableViewCellReuseIdentifier : String = "PostTableViewCell"
+    var posts : [Post] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-       fetchData()
+        initializeTableView()
+        registerXIBWithPostTableView()
+        fetchData()
+    }
+    
+    func initializeTableView(){
+        postTableView.dataSource = self
+        postTableView.delegate = self
+    }
+    
+    func registerXIBWithPostTableView(){
+        let uiNib = UINib(nibName: postTableViewCellReuseIdentifier, bundle: nil)
+        postTableView.register(uiNib, forCellReuseIdentifier: postTableViewCellReuseIdentifier)
     }
     
     func fetchData(){
@@ -42,8 +57,40 @@ class ViewController: UIViewController {
                 let id = eachDictionary["id"] as! Int
                 let title = eachDictionary["title"] as! String
                 let body = eachDictionary["body"] as! String
+                
+                let newPostObject = Post(userId: userId, id: id, title: title, body: body)
+                
+                self.posts.append(newPostObject)
+                print("userId -- \(userId) Id -- \(id)")
+            }
+            
+            DispatchQueue.main.async {
+                self.postTableView.reloadData()
             }
         }
         dataTask.resume()
+    }
+}
+
+extension ViewController : UITableViewDataSource{
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        posts.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+       let postTableViewCell = self.postTableView.dequeueReusableCell(withIdentifier: postTableViewCellReuseIdentifier, for: indexPath) as! PostTableViewCell
+    
+        postTableViewCell.postUserId.text = String(posts[indexPath.row].userId)
+        postTableViewCell.idLabel.text = String(posts[indexPath.row].id)
+        postTableViewCell.titleLabel.text = posts[indexPath.row].title
+        postTableViewCell.bodyLabel.text = posts[indexPath.row].body
+        
+        return postTableViewCell
+    }
+}
+
+extension ViewController : UITableViewDelegate{
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 165.0
     }
 }
